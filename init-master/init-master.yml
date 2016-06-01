@@ -1,0 +1,82 @@
+- name: Configure Kubernetes Cluster Master Node
+  hosts: '*'
+  vars:
+    # These should probably all be set within jenkins
+    ClusterID: ''
+    InitialClusterList: ''
+    InitialAdvertisePeerUrls: ''
+    AdvertiseClientUrls: ''
+
+    # We can pretty much set this to whatever - it does not need to be
+    # unique per cluster
+    OverlayNetwork: '10.1.0.0/16'
+
+    # Leave this variable alone; this works in conjunction with Jenkins value to
+    # authenticate
+    ansible_ssh_private_key_file: "/opt/keys/{{SSHKeyName}}"
+
+  tasks:
+  - name: Install docker and k8s repo
+    copy: src=/opt/books/init-master/docker.repo dest=/opt/yum.repos.d/docker.repo
+
+  - name: Install etcd
+    yum: name=etcd state=latest
+
+  - name: Configure etcd
+    template: src=/opt/books/init-master/etcd.j2 dest=/etc/etcd/etcd.conf owner=root group=root mode=0644
+
+  - name: Fix etcd data directory permissions
+    file: path=/var/lib/etcd/default.etcd state=directory mode=0644 owner=etcd group=etcd
+
+  - name: Start and enable etcd
+    service: name=etcd state=started enabled=yes
+
+  - name: Set flannel subnet in etcd
+    command: /usr/bin/etcdctl set /coreos.com/network/config '{ "Network":"{{OverlayNetwork}}" }' 
+
+  - name: Install flannel
+    yum: name=flannel state=latest
+
+    # We are configuring flannel to talk to etcd on local private
+    # address. 
+  - name: Configure flanneld
+    lineinfile:
+      dest: /etc/sysconfig/flanneld
+      regexp: '^FLANNEL_ETCD='
+      line: 'FLANNEL_ETCD=http://{{ansible_default_ipv4.address}}:4001'
+
+  - name: Start and enable flanneld
+    service: name=flanneld state=started enabled=yes
+
+  - name: Install docker
+    yum: name=docker state=latest
+
+  - name: Start and enable docker
+    service: name=docker state=started enabled=yes
+
+  - name: Install kubernetes
+    yum: name=kubernetes state=latest
+
+  - name: Configure kubernetes APIServer
+    template: src=/opt/books/init-master/apiserver.j2 dest=/etc/kubernetes/apiserver owner=root group=root mode=0644
+
+  - name: Configure kubernetes
+    template: src=/opt/books/init-master/config.j2 dest=/etc/kubernetes/config owner=root group=root mode=0644
+
+  - name: Configure kubernetes Kubelet
+    template: src=/opt/books/init-master/kubelet.j2 dest=/etc/kubernetes/kubelet owner=root group=root mode=0644
+
+  - name: Start APIServer
+    service: name=kube-apiserver state=started enabled=yes
+
+  - name: Start Controller
+    service: name=kube-controller-manager state=started enabled=yes
+
+  - name: Start Scheduler
+    service: name=kube-scheduler state=started enabled=yes
+
+  - name: Start Proxy
+    service: name=kube-proxy state=started enabled=yes
+
+  - name: Start Kubelet
+    service: name=kubelet state=started enabled=yes

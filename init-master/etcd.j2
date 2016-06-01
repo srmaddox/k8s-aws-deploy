@@ -1,0 +1,14 @@
+#[member]
+ETCD_NAME="{{ansible_hostname}}"
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+ETCD_HEARTBEAT_INTERVAL="100"
+ETCD_ELECTION_TIMEOUT="1000"
+ETCD_LISTEN_PEER_URLS="http://{{ansible_default_ipv4.address}}:2380,http://localhost:2380"
+ETCD_LISTEN_CLIENT_URLS="http://{{ansible_default_ipv4.address}}:4001,http://localhost:4001"
+
+#[cluster]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ansible_default_ipv4.address}}:2380"
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:4001,http://{{ansible_default_ipv4.address}}:4001"
+ETCD_INITIAL_CLUSTER="{{ETCD_INITIAL_CLUSTER}}"
+ETCD_INITIAL_CLUSTER_STATE="{{ETCD_INITIAL_CLUSTER_STATE}}"
+ETCD_INITIAL_CLUSTER_TOKEN="{{ClusterID}}"
