@@ -9,6 +9,6 @@ ETCD_LISTEN_CLIENT_URLS="http://{{ansible_default_ipv4.address}}:4001,http://loc
 #[cluster]
 ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ansible_default_ipv4.address}}:2380"
 ETCD_ADVERTISE_CLIENT_URLS="http://localhost:4001,http://{{ansible_default_ipv4.address}}:4001"
-ETCD_INITIAL_CLUSTER="http://{{ansible_default_ipv4.address}}:2380"
+ETCD_INITIAL_CLUSTER="{{ansible_hostname}}=http://{{ansible_default_ipv4.address}}:2380"
 ETCD_INITIAL_CLUSTER_STATE="{{ETCD_INITIAL_CLUSTER_STATE}}"
 ETCD_INITIAL_CLUSTER_TOKEN="{{ClusterID}}"
